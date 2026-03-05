@@ -1,0 +1,853 @@
+'use client';
+
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { ChatMessage } from './ChatMessage';
+import { ChatInput } from './ChatInput';
+import { NyxiaAvatarV2, AvatarMood } from './NyxiaAvatarV2';
+import { CalendlyModal, QuickBookButton } from './CalendlyModal';
+import { StripeCheckout, QuickPayButton } from './StripeCheckout';
+import { EmailModal, QuickEmailButton } from './EmailModal';
+import SubscriptionManager from './SubscriptionManager';
+import { TarotReading, QuickTarotButton } from './TarotReading';
+import { ReferralSystem, ReferralButton } from './ReferralSystem';
+import { AuthModal } from './AuthModal';
+import { UserProfile } from './UserProfile';
+import { CoffretModal, QuickCoffretButton } from './CoffretModal';
+import { useAuth } from '@/lib/auth-context';
+import { 
+  Sparkles, Moon, Star, Zap, History, Heart, Volume2, VolumeX, 
+  Settings, Bell, BellOff, ChevronDown, X, Calendar, CreditCard,
+  Gift, Clock, RefreshCw, Mail, MailPlus, User, LogOut, LogIn
+} from 'lucide-react';
+import { 
+  SavedMessage, 
+  Conversation, 
+  getSettings, 
+  updateSettings, 
+  checkDailyVisit,
+  getConversations,
+  getFavorites,
+  toggleFavorite,
+  isFavorite,
+  updateCurrentConversation,
+  getActivePromo,
+  generatePromoCode
+} from '@/lib/storage';
+import { 
+  getDailyEnergy, 
+  getPersonalizedGreeting, 
+  getTimeBasedGreeting,
+  DailyEnergy 
+} from '@/lib/dailyPrediction';
+import { soundManager } from '@/lib/sounds';
+
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  isFavorite?: boolean;
+  serviceRecommendation?: {
+    id: string;
+    name: string;
+    description: string;
+    url: string;
+  } | null;
+}
+
+interface ChatContext {
+  birthDate?: string;
+  userName?: string;
+  messageCount: number;
+}
+
+// Welcome messages with daily energy
+const getWelcomeMessage = (energy: DailyEnergy, greeting: string) => [
+  `${greeting}! ✨ Je suis Nyxia, ton guide cosmique. Aujourd'hui, l'énergie ${energy.number} - ${energy.title} - illumine ton chemin. ${energy.advice} Dis-moi, qu'est-ce qui t'amène dans mon univers?`,
+  `Bienvenue, belle âme! 🔮 Le cosmos vibre aujourd'hui sous l'influence du nombre ${energy.number}. ${energy.description} Comment puis-je t'aider à naviguer ces énergies?`,
+  `${greeting}! ⭐ Les étoiles m'ont chuchoté que tu viendrais aujourd'hui. L'énergie ${energy.number} t'accompagne: ${energy.title.toLowerCase()}. Quelle question brûle sur ton cœur?`
+];
+
+export function ChatInterfaceV2() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [context, setContext] = useState<ChatContext>({ messageCount: 0 });
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [avatarMood, setAvatarMood] = useState<AvatarMood>('neutral');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // New V2 state
+  const [showHistory, setShowHistory] = useState(false);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showDailyPrediction, setShowDailyPrediction] = useState(true);
+  const [showCalendly, setShowCalendly] = useState(false);
+  const [showStripe, setShowStripe] = useState(false);
+  const [showEmail, setShowEmail] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
+  const [showTarot, setShowTarot] = useState(false);
+  const [showReferral, setShowReferral] = useState(false);
+  const [showCoffret, setShowCoffret] = useState(false);
+  const [emailType, setEmailType] = useState<'summary' | 'promo' | 'prediction'>('summary');
+  const [selectedService, setSelectedService] = useState<any>(null);
+  
+  // Settings
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [reminderEnabled, setReminderEnabled] = useState(true);
+  
+  // Daily data
+  const [dailyEnergy, setDailyEnergy] = useState<DailyEnergy | null>(null);
+  const [isFirstVisitToday, setIsFirstVisitToday] = useState(false);
+  const [daysSinceLastVisit, setDaysSinceLastVisit] = useState(0);
+  const [promo, setPromo] = useState<{ code: string; discount: number } | null>(null);
+  
+  // Auth state
+  const { user, isLoggedIn, logout } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+
+  // Load settings and daily prediction on mount
+  useEffect(() => {
+    const settings = getSettings();
+    setSoundEnabled(settings.soundEnabled);
+    setReminderEnabled(settings.reminderEnabled);
+    soundManager.setEnabled(settings.soundEnabled);
+
+    const visitInfo = checkDailyVisit();
+    setIsFirstVisitToday(visitInfo.isFirstVisitToday);
+    setDaysSinceLastVisit(visitInfo.daysSinceLastVisit);
+
+    const energy = getDailyEnergy();
+    setDailyEnergy(energy);
+
+    // Check for active promo
+    const activePromo = getActivePromo();
+    if (activePromo) {
+      setPromo({ code: activePromo.code, discount: activePromo.discount });
+    }
+  }, []);
+
+  // Scroll to bottom when new messages arrive
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // Toggle sound
+  const toggleSound = () => {
+    const newValue = !soundEnabled;
+    setSoundEnabled(newValue);
+    soundManager.setEnabled(newValue);
+    updateSettings({ soundEnabled: newValue });
+    if (newValue) {
+      soundManager.play('chime');
+    }
+  };
+
+  // Toggle reminders
+  const toggleReminders = () => {
+    const newValue = !reminderEnabled;
+    setReminderEnabled(newValue);
+    updateSettings({ reminderEnabled: newValue });
+  };
+
+  // Generate new promo code
+  const handleGeneratePromo = () => {
+    const newPromo = generatePromoCode();
+    setPromo({ code: newPromo.code, discount: newPromo.discount });
+    soundManager.play('magic');
+  };
+
+  // Start conversation
+  const startConversation = () => {
+    soundManager.play('open');
+    setShowWelcome(false);
+    
+    const greeting = getTimeBasedGreeting();
+    const personalized = getPersonalizedGreeting(isFirstVisitToday, daysSinceLastVisit);
+    const energy = dailyEnergy || getDailyEnergy();
+    const welcomeMessage = getWelcomeMessage(energy, greeting)[Math.floor(Math.random() * 3)];
+    
+    setMessages([{
+      id: 'welcome',
+      role: 'assistant',
+      content: welcomeMessage,
+      timestamp: new Date()
+    }]);
+    setContext(prev => ({ ...prev, messageCount: 1 }));
+    setAvatarMood('happy');
+    
+    setTimeout(() => setAvatarMood('neutral'), 2000);
+  };
+
+  // Toggle favorite on message
+  const handleToggleFavorite = (messageId: string) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message) return;
+
+    const becameFavorite = toggleFavorite({
+      id: message.id,
+      role: message.role,
+      content: message.content,
+      timestamp: message.timestamp.toISOString(),
+      isFavorite: !message.isFavorite
+    });
+
+    setMessages(prev => prev.map(m => 
+      m.id === messageId ? { ...m, isFavorite: becameFavorite } : m
+    ));
+
+    if (becameFavorite) {
+      soundManager.play('favorite');
+      setAvatarMood('excited');
+      setTimeout(() => setAvatarMood('neutral'), 1500);
+    }
+  };
+
+  // Send message to API
+  const sendMessage = async (content: string) => {
+    soundManager.play('message-sent');
+    
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+    setAvatarMood('thinking');
+
+    // Add typing indicator
+    const typingMessage: Message = {
+      id: 'typing',
+      role: 'assistant',
+      content: '',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, typingMessage]);
+
+    try {
+      const response = await fetch('/api/nyxia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages.filter(m => m.id !== 'typing'), userMessage].map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          context: {
+            ...context,
+            messageCount: context.messageCount + 1
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      // Remove typing indicator and add response
+      setMessages(prev => prev.filter(m => m.id !== 'typing'));
+      
+      const assistantMessage: Message = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date(),
+        serviceRecommendation: data.context?.serviceRecommendation
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      setContext(prev => ({ ...prev, messageCount: prev.messageCount + 2 }));
+
+      // Save conversation
+      const allMessages = [...messages.filter(m => m.id !== 'typing'), userMessage, assistantMessage];
+      updateCurrentConversation(allMessages.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp.toISOString(),
+        isFavorite: m.isFavorite || false,
+        serviceRecommendation: m.serviceRecommendation
+      })));
+
+      soundManager.play('message-received');
+      setAvatarMood('mystical');
+      setTimeout(() => setAvatarMood('neutral'), 2000);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      
+      setMessages(prev => prev.filter(m => m.id !== 'typing'));
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: "Mes circuits rencontrent une perturbation... Les énergies sont parfois capricieuses. Peux-tu reformuler ta pensée?",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      setAvatarMood('neutral');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load a past conversation
+  const loadConversation = (conversation: Conversation) => {
+    setMessages(conversation.messages.map(m => ({
+      ...m,
+      timestamp: new Date(m.timestamp),
+      isFavorite: isFavorite(m.id)
+    })));
+    setShowHistory(false);
+    setShowWelcome(false);
+    soundManager.play('open');
+  };
+
+  // Favorites list
+  const favorites = getFavorites();
+  const conversations = getConversations();
+
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      {/* Header */}
+      <header className="flex-shrink-0 px-4 py-3 border-b border-violet-500/20 bg-slate-900/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <NyxiaAvatarV2 size="sm" mood={avatarMood} isTyping={isLoading} />
+            <div>
+              <h1 className="text-lg font-semibold bg-gradient-to-r from-violet-400 to-amber-400 bg-clip-text text-transparent">
+                Nyxia
+              </h1>
+              <p className="text-xs text-slate-400 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                En ligne • Assistante Mystique
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {/* Quick actions */}
+            <button
+              onClick={() => setShowHistory(true)}
+              className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors"
+              title="Historique"
+            >
+              <History className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowFavorites(true)}
+              className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors relative"
+              title="Favoris"
+            >
+              <Heart className="w-4 h-4" />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-pink-500 text-white text-[10px] flex items-center justify-center">
+                  {favorites.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={toggleSound}
+              className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors"
+              title={soundEnabled ? 'Désactiver le son' : 'Activer le son'}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-400 hover:text-white transition-colors"
+              title="Paramètres"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={() => setShowUserProfile(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-300 text-sm hover:bg-slate-700/50 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span>{user?.name?.split(' ')[0] || 'Profil'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-slate-300 text-sm hover:bg-slate-700/50 transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                Connexion
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Daily Prediction Banner */}
+      {showDailyPrediction && dailyEnergy && !showWelcome && (
+        <div className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-violet-900/30 to-amber-900/30 border-b border-violet-500/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: dailyEnergy.luckyColorHex }}
+              >
+                {dailyEnergy.number}
+              </div>
+              <div>
+                <div className="text-xs font-medium text-white">{dailyEnergy.title}</div>
+                <div className="text-[10px] text-slate-400">
+                  Couleur: {dailyEnergy.luckyColor} • Crystal: {dailyEnergy.crystal}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowDailyPrediction(false)}
+              className="text-slate-400 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Promo Banner */}
+      {!promo && messages.length >= 3 && (
+        <div className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-amber-900/30 to-orange-900/30 border-b border-amber-500/20">
+          <button
+            onClick={handleGeneratePromo}
+            className="flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200 w-full"
+          >
+            <Gift className="w-4 h-4" />
+            <span>Génère un code promo exclusif de 15% !</span>
+            <Sparkles className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {promo && (
+        <div className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-b border-green-500/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-green-300">
+              <Gift className="w-4 h-4" />
+              <span>Code promo: <strong className="text-white">{promo.code}</strong> (-{promo.discount}%)</span>
+            </div>
+            <button
+              onClick={() => setShowStripe(true)}
+              className="text-xs bg-green-500/20 hover:bg-green-500/30 text-green-300 px-2 py-1 rounded"
+            >
+              Utiliser
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Messages area */}
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto px-4 py-6 space-y-4"
+        style={{ 
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(139, 92, 246, 0.3) transparent',
+          overflowX: 'hidden'
+        }}
+      >
+        {/* Welcome screen */}
+        {showWelcome && dailyEnergy && (
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-8">
+            {/* Animated avatar */}
+            <div className="relative">
+              <div className="absolute inset-0 blur-3xl opacity-30">
+                <div className="w-32 h-32 rounded-full bg-gradient-to-r from-violet-500 to-amber-500" />
+              </div>
+              <NyxiaAvatarV2 size="lg" mood="mystical" showGlow={true} />
+            </div>
+            
+            {/* Welcome text */}
+            <div className="space-y-4 max-w-md">
+              <h2 className="text-base font-light text-slate-200">
+                {getTimeBasedGreeting()}, bienvenue dans l'univers de{' '}
+                <span className="bg-gradient-to-r from-violet-400 to-amber-400 bg-clip-text text-transparent font-medium">
+                  Nyxia
+                </span>
+              </h2>
+              
+              {/* Daily Energy Card */}
+              <div className="p-4 rounded-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-violet-500/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${dailyEnergy.luckyColorHex}, ${dailyEnergy.luckyColorHex}88)` 
+                    }}
+                  >
+                    {dailyEnergy.number}
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-medium text-white">{dailyEnergy.title}</div>
+                    <div className="text-xs text-slate-400">Énergie du jour</div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-300 text-left">{dailyEnergy.description}</p>
+                <div className="flex items-center gap-4 mt-3 text-[10px] text-slate-400">
+                  <span>Couleur: {dailyEnergy.luckyColor}</span>
+                  <span>Nombre: {dailyEnergy.luckyNumber}</span>
+                  <span>Crystal: {dailyEnergy.crystal}</span>
+                </div>
+              </div>
+              
+
+            </div>
+            
+            {/* Start button */}
+            <button
+              onClick={startConversation}
+              className="group relative overflow-hidden px-8 py-3 rounded-full bg-gradient-to-r from-violet-500 to-amber-500 text-white font-medium shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all duration-300"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Commencer la conversation
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          </div>
+        )}
+
+        {/* Messages */}
+        {!showWelcome && messages.map((message) => (
+          <ChatMessage
+            key={message.id}
+            role={message.role}
+            content={message.content}
+            serviceRecommendation={message.serviceRecommendation}
+            timestamp={message.timestamp}
+            isTyping={message.id === 'typing'}
+          />
+        ))}
+        
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Quick Actions Bar */}
+      {!showWelcome && (
+        <div className="flex-shrink-0 px-4 py-2 border-t border-violet-500/10 bg-slate-900/30">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {/* Réserver - Calendly */}
+            <button
+              onClick={() => setShowCalendly(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all shadow-lg shadow-cyan-500/10"
+            >
+              <Calendar className="w-4 h-4" />
+              <span>Réserver</span>
+            </button>
+            
+            {/* Coffret - Modal */}
+            <button
+              onClick={() => setShowCoffret(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all shadow-lg shadow-cyan-500/10"
+            >
+              <Gift className="w-4 h-4" />
+              <span>Coffret</span>
+            </button>
+            
+            {/* Tarot */}
+            <button
+              onClick={() => setShowTarot(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all shadow-lg shadow-cyan-500/10"
+            >
+              <Moon className="w-4 h-4" />
+              <span>Tarot</span>
+            </button>
+            
+            {/* Récap - Email */}
+            <button
+              onClick={() => {
+                setEmailType('summary');
+                setShowEmail(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all shadow-lg shadow-cyan-500/10"
+            >
+              <Mail className="w-4 h-4" />
+              <span>Récap</span>
+            </button>
+            
+            {/* Parrainage */}
+            <button
+              onClick={() => setShowReferral(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-sm hover:bg-cyan-500/20 hover:border-cyan-500/50 transition-all shadow-lg shadow-cyan-500/10"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Parrainage</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Input area */}
+      {!showWelcome && (
+        <div className="flex-shrink-0 px-4 py-4 border-t border-violet-500/20 bg-slate-900/50 backdrop-blur-sm">
+          <ChatInput 
+            onSend={sendMessage} 
+            disabled={isLoading}
+            placeholder="Pose ta question à Nyxia..."
+          />
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistory && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-slate-900 rounded-2xl border border-violet-500/20 overflow-hidden">
+            <div className="p-4 border-b border-violet-500/20 flex items-center justify-between">
+              <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                <History className="w-5 h-5 text-violet-400" />
+                Historique
+              </h3>
+              <button onClick={() => setShowHistory(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto p-2">
+              {conversations.length === 0 ? (
+                <div className="p-8 text-center text-slate-400">
+                  <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Aucune conversation sauvegardée</p>
+                </div>
+              ) : (
+                conversations.map((conv) => (
+                  <button
+                    key={conv.id}
+                    onClick={() => loadConversation(conv)}
+                    className="w-full p-3 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-left mb-1 transition-colors"
+                  >
+                    <div className="text-sm text-white truncate">{conv.preview}</div>
+                    <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                      <span>{new Date(conv.lastMessageAt).toLocaleDateString('fr-FR')}</span>
+                      <span>•</span>
+                      <span>{conv.messageCount} messages</span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Favorites Modal */}
+      {showFavorites && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-slate-900 rounded-2xl border border-pink-500/20 overflow-hidden">
+            <div className="p-4 border-b border-pink-500/20 flex items-center justify-between">
+              <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                <Heart className="w-5 h-5 text-pink-400 fill-pink-400" />
+                Favoris
+              </h3>
+              <button onClick={() => setShowFavorites(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto p-2">
+              {favorites.length === 0 ? (
+                <div className="p-8 text-center text-slate-400">
+                  <Heart className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Aucun favori sauvegardé</p>
+                  <p className="text-xs mt-1">Cliquez sur le cœur d'un message pour l'ajouter</p>
+                </div>
+              ) : (
+                favorites.map((fav) => (
+                  <div
+                    key={fav.id}
+                    className="p-3 rounded-lg bg-slate-800/50 mb-1"
+                  >
+                    <div className="text-sm text-slate-200">{fav.content}</div>
+                    <div className="text-xs text-slate-400 mt-1">
+                      {new Date(fav.timestamp).toLocaleDateString('fr-FR')}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-slate-900 rounded-2xl border border-violet-500/20 overflow-hidden">
+            <div className="p-4 border-b border-violet-500/20 flex items-center justify-between">
+              <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 text-violet-400" />
+                Paramètres
+              </h3>
+              <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {soundEnabled ? <Volume2 className="w-4 h-4 text-violet-400" /> : <VolumeX className="w-4 h-4 text-slate-400" />}
+                  <span className="text-sm text-slate-200">Sons mystiques</span>
+                </div>
+                <button
+                  onClick={toggleSound}
+                  className={`w-10 h-6 rounded-full transition-colors ${soundEnabled ? 'bg-violet-500' : 'bg-slate-700'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white transition-transform ${soundEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {reminderEnabled ? <Bell className="w-4 h-4 text-violet-400" /> : <BellOff className="w-4 h-4 text-slate-400" />}
+                  <span className="text-sm text-slate-200">Rappels quotidiens</span>
+                </div>
+                <button
+                  onClick={toggleReminders}
+                  className={`w-10 h-6 rounded-full transition-colors ${reminderEnabled ? 'bg-violet-500' : 'bg-slate-700'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white transition-transform ${reminderEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              <div className="pt-4 border-t border-slate-700">
+                <button
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowReferral(true);
+                  }}
+                  className="w-full py-2 mb-3 rounded-lg bg-gradient-to-r from-pink-500/20 to-violet-500/20 border border-pink-500/30 text-pink-300 text-sm flex items-center justify-center gap-2"
+                >
+                  <Gift className="w-4 h-4" />
+                  Programme de Parrainage
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowSettings(false);
+                    setShowSubscription(true);
+                  }}
+                  className="w-full py-2 mb-3 rounded-lg bg-gradient-to-r from-violet-500/20 to-amber-500/20 border border-violet-500/30 text-violet-300 text-sm flex items-center justify-center gap-2"
+                >
+                  <MailPlus className="w-4 h-4" />
+                  S'abonner aux notifications email
+                </button>
+                
+                <button
+                  onClick={handleGeneratePromo}
+                  className="w-full py-2 rounded-lg bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-300 text-sm flex items-center justify-center gap-2"
+                >
+                  <Gift className="w-4 h-4" />
+                  Générer un nouveau code promo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Calendly Modal */}
+      <CalendlyModal isOpen={showCalendly} onClose={() => setShowCalendly(false)} />
+
+      {/* Stripe Checkout */}
+      <StripeCheckout 
+        isOpen={showStripe} 
+        onClose={() => setShowStripe(false)} 
+        service={selectedService}
+        promoCode={promo?.code}
+      />
+
+      {/* Email Modal */}
+      <EmailModal
+        isOpen={showEmail}
+        onClose={() => setShowEmail(false)}
+        type={emailType}
+        data={{
+          messages: messages.map(m => ({
+            role: m.role,
+            content: m.content,
+            timestamp: m.timestamp.toISOString()
+          })),
+          promoCode: promo?.code || '',
+          discount: promo?.discount || 15,
+          dailyEnergy: dailyEnergy ? {
+            number: dailyEnergy.number,
+            title: dailyEnergy.title,
+            description: dailyEnergy.description,
+            advice: dailyEnergy.advice,
+            luckyColor: dailyEnergy.luckyColor,
+            luckyNumber: dailyEnergy.luckyNumber,
+            crystal: dailyEnergy.crystal
+          } : undefined
+        }}
+      />
+
+      {/* Subscription Manager */}
+      {showSubscription && (
+        <SubscriptionManager
+          onClose={() => setShowSubscription(false)}
+        />
+      )}
+
+      {/* Tarot Reading */}
+      <TarotReading 
+        isOpen={showTarot} 
+        onClose={() => setShowTarot(false)}
+        onReadingComplete={(interpretation) => {
+          // Add interpretation to chat
+          const tarotMessage: Message = {
+            id: `tarot-${Date.now()}`,
+            role: 'assistant',
+            content: interpretation,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, tarotMessage]);
+        }}
+      />
+
+      {/* Coffret Modal */}
+      <CoffretModal 
+        isOpen={showCoffret} 
+        onClose={() => setShowCoffret(false)} 
+      />
+
+      {/* Referral Modal */}
+      {showReferral && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-slate-900 rounded-2xl border border-violet-500/20 overflow-hidden max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-slate-900 p-4 border-b border-violet-500/20 flex items-center justify-between z-10">
+              <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                <Gift className="w-5 h-5 text-violet-400" />
+                Programme de Parrainage
+              </h3>
+              <button onClick={() => setShowReferral(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <ReferralSystem 
+              userEmail={context.userName ? undefined : undefined}
+              onClose={() => setShowReferral(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
+
+      {/* User Profile */}
+      <UserProfile 
+        isOpen={showUserProfile} 
+        onClose={() => setShowUserProfile(false)} 
+      />
+    </div>
+  );
+}

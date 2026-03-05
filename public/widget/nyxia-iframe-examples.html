@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codes Iframe Nyxia | Intégration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0F172A, #1E1B4B);
+      color: #E0E7FF;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container { max-width: 900px; margin: 0 auto; }
+    
+    header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    
+    .logo { font-size: 48px; margin-bottom: 15px; }
+    
+    h1 {
+      font-size: 32px;
+      background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    
+    .subtitle { color: #94A3B8; font-size: 16px; }
+    
+    section {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(0, 212, 255, 0.15);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    
+    h2 {
+      font-size: 20px;
+      color: #00D4FF;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .code-container {
+      background: #0F172A;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 15px 0;
+    }
+    
+    .code-header {
+      background: rgba(0, 212, 255, 0.1);
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+    }
+    
+    .code-title {
+      font-size: 12px;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .copy-btn {
+      background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .copy-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+    }
+    
+    .copy-btn.copied {
+      background: #4ADE80;
+    }
+    
+    .code-content {
+      padding: 20px;
+      overflow-x: auto;
+    }
+    
+    code {
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 13px;
+      color: #E0E7FF;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.6;
+    }
+    
+    .preview-label {
+      font-size: 14px;
+      color: #9D4EDD;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+    
+    .preview-box {
+      background: #1E293B;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 15px;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .preview-box iframe {
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .tag {
+      display: inline-block;
+      background: rgba(0, 212, 255, 0.15);
+      color: #00D4FF;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .tag.recommended {
+      background: rgba(74, 222, 128, 0.15);
+      color: #4ADE80;
+    }
+    
+    .description {
+      color: #94A3B8;
+      font-size: 14px;
+      margin-bottom: 15px;
+      line-height: 1.6;
+    }
+    
+    .sizes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .size-option {
+      background: rgba(0, 212, 255, 0.05);
+      border: 1px solid rgba(0, 212, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .size-option:hover {
+      border-color: rgba(0, 212, 255, 0.3);
+      background: rgba(0, 212, 255, 0.1);
+    }
+    
+    .size-option.active {
+      border-color: #00D4FF;
+      background: rgba(0, 212, 255, 0.15);
+    }
+    
+    .size-label { font-size: 12px; color: #94A3B8; }
+    .size-value { font-size: 14px; color: #00D4FF; font-weight: 600; margin-top: 4px; }
+    
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0, 212, 255, 0.1);
+      color: #64748B;
+      font-size: 14px;
+    }
+    
+    footer a { color: #00D4FF; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">🔮</div>
+      <h1>Codes Iframe Nyxia</h1>
+      <p class="subtitle">Intégrez votre assistante mystique en un clic</p>
+    </header>
+
+    <!-- OPTION 1: Iframe Pleine Page -->
+    <section>
+      <h2>📐 Option 1 : Iframe Pleine Page</h2>
+      <p class="description">
+        Parfait pour une page dédiée ou une section complète de votre site. Remplacez <code style="background:rgba(0,212,255,0.1);padding:2px 6px;border-radius:4px;color:#00D4FF;">VOTRE-DOMAINE.com</code> par votre domaine réel.
+      </p>
+      <span class="tag recommended">★ Recommandé</span>
+      <span class="tag">Responsive</span>
+      <span class="tag">Hauteur 700px</span>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-title">HTML</span>
+          <button class="copy-btn" onclick="copyCode(this, 'code1')">Copier le code</button>
+        </div>
+        <div class="code-content">
+          <code id="code1">&lt;iframe 
+  src="https://VOTRE-DOMAINE.com" 
+  width="100%" 
+  height="700" 
+  frameborder="0" 
+  style="border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);"
+  title="Nyxia - Assistante Mystique IA"
+  allow="microphone; camera"
+&gt;&lt;/iframe&gt;</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION 2: Iframe Compact -->
+    <section>
+      <h2>📱 Option 2 : Iframe Compact (Mobile)</h2>
+      <p class="description">
+        Idéal pour les barres latérales, sections plus petites ou affichage mobile.
+      </p>
+      <span class="tag">Compact</span>
+      <span class="tag">Mobile-first</span>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-title">HTML</span>
+          <button class="copy-btn" onclick="copyCode(this, 'code2')">Copier le code</button>
+        </div>
+        <div class="code-content">
+          <code id="code2">&lt;iframe 
+  src="https://VOTRE-DOMAINE.com" 
+  width="100%" 
+  height="500" 
+  frameborder="0" 
+  style="border-radius: 16px; border: 1px solid rgba(0, 212, 255, 0.2);"
+  title="Nyxia - Assistante Mystique"
+&gt;&lt;/iframe&gt;</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION 3: Iframe avec Container -->
+    <section>
+      <h2>🎨 Option 3 : Iframe avec Container Stylisé</h2>
+      <p class="description">
+        Version premium avec un conteneur élégant incluant un titre et des effets visuels.
+      </p>
+      <span class="tag">Premium</span>
+      <span class="tag">Design complet</span>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-title">HTML</span>
+          <button class="copy-btn" onclick="copyCode(this, 'code3')">Copier le code</button>
+        </div>
+        <div class="code-content">
+          <code id="code3">&lt;!-- Container Nyxia avec style --&gt;
+&lt;div style="max-width: 500px; margin: 0 auto; padding: 20px;"&gt;
+  &lt;div style="
+    background: linear-gradient(135deg, #0F172A, #1E1B4B);
+    border-radius: 24px;
+    padding: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 212, 255, 0.2);
+  "&gt;
+    &lt;!-- En-tête --&gt;
+    &lt;div style="
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+    "&gt;
+      &lt;div style="
+        width: 48px; height: 48px;
+        background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+      "&gt;🔮&lt;/div&gt;
+      &lt;div&gt;
+        &lt;div style="font-weight: 600; font-size: 18px; background: linear-gradient(135deg, #00D4FF, #9D4EDD); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"&gt;Nyxia&lt;/div&gt;
+        &lt;div style="font-size: 12px; color: #4ADE80;"&gt;● En ligne • Assistante Mystique&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    
+    &lt;!-- Iframe --&gt;
+    &lt;iframe 
+      src="https://VOTRE-DOMAINE.com" 
+      width="100%" 
+      height="550" 
+      frameborder="0" 
+      style="border-radius: 0 0 16px 16px; display: block;"
+      title="Nyxia - Assistante Mystique IA"
+    &gt;&lt;/iframe&gt;
+  &lt;/div&gt;
+  &lt;p style="text-align: center; font-size: 11px; color: #64748B; margin-top: 12px;"&gt;
+    Propulsé par &lt;a href="https://www.oznya.com" target="_blank" style="color: #00D4FF;"&gt;Diane Boyer&lt;/a&gt;
+  &lt;/p&gt;
+&lt;/div&gt;</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION 4: Popup Modal -->
+    <section>
+      <h2>🪟 Option 4 : Popup Modal</h2>
+      <p class="description">
+        Ouvre Nyxia dans une fenêtre modale quand on clique sur un bouton. Idéal pour ne pas encombrer la page.
+      </p>
+      <span class="tag">Popup</span>
+      <span class="tag">Non intrusif</span>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-title">HTML + CSS + JavaScript</span>
+          <button class="copy-btn" onclick="copyCode(this, 'code4')">Copier le code</button>
+        </div>
+        <div class="code-content">
+          <code id="code4">&lt;!-- Bouton pour ouvrir Nyxia --&gt;
+&lt;button onclick="openNyxia()" style="
+  background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+"&gt;
+  🔮 Parler avec Nyxia
+&lt;/button&gt;
+
+&lt;!-- Modal Nyxia --&gt;
+&lt;div id="nyxiaModal" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+"&gt;
+  &lt;div style="
+    position: relative;
+    width: 95%;
+    max-width: 500px;
+    height: 80vh;
+    background: linear-gradient(135deg, #0F172A, #1E1B4B);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+  "&gt;
+    &lt;button onclick="closeNyxia()" style="
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+    "&gt;✕&lt;/button&gt;
+    &lt;iframe 
+      src="https://VOTRE-DOMAINE.com" 
+      width="100%" 
+      height="100%" 
+      frameborder="0"
+      style="border-radius: 24px;"
+      title="Nyxia"
+    &gt;&lt;/iframe&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+function openNyxia() {
+  document.getElementById('nyxiaModal').style.display = 'flex';
+}
+function closeNyxia() {
+  document.getElementById('nyxiaModal').style.display = 'none';
+}
+// Fermer avec Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeNyxia();
+});
+&lt;/script&gt;</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTION 5: Lien Simple -->
+    <section>
+      <h2>🔗 Option 5 : Lien Simple</h2>
+      <p class="description">
+        Un simple lien stylisé qui ouvre Nyxia dans un nouvel onglet.
+      </p>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-title">HTML</span>
+          <button class="copy-btn" onclick="copyCode(this, 'code5')">Copier le code</button>
+        </div>
+        <div class="code-content">
+          <code id="code5">&lt;a href="https://VOTRE-DOMAINE.com" target="_blank" style="
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+  transition: all 0.3s;
+"&gt;
+  🔮 Parler avec Nyxia
+&lt;/a&gt;</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pour les Coffrets -->
+    <section>
+      <h2>📦 Pour vos Coffrets Numériques</h2>
+      <p class="description">
+        Code optimisé pour l'intégration dans vos coffrets PDF ou pages de membre.
+      </p>
+      <span class="tag recommended">Coffrets</span>
+      <span class="tag">PDF compatible</span>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span class="code-title">HTML pour Coffret</span>
+          <button class="copy-btn" onclick="copyCode(this, 'code6')">Copier le code</button>
+        </div>
+        <div class="code-content">
+          <code id="code6">&lt;!-- Section Nyxia pour Coffret --&gt;
+&lt;div style="
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+  border-radius: 24px;
+  padding: 30px;
+  text-align: center;
+  margin: 30px 0;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+"&gt;
+  &lt;div style="font-size: 48px; margin-bottom: 15px;"&gt;🔮&lt;/div&gt;
+  &lt;h3 style="
+    color: white;
+    font-size: 24px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  "&gt;Votre Assistante Mystique&lt;/h3&gt;
+  &lt;p style="color: #94A3B8; margin-bottom: 25px; font-size: 14px;"&gt;
+    Nyxia vous attend pour révéler les mystères de votre vie...
+  &lt;/p&gt;
+  &lt;a href="https://VOTRE-DOMAINE.com" target="_blank" style="
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+    color: white;
+    padding: 14px 32px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+  "&gt;
+    ✨ Commencer ma lecture
+  &lt;/a&gt;
+&lt;/div&gt;</code>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>Propulsé par <a href="https://www.oznya.com" target="_blank">Diane Boyer</a> • Développé avec 💜</p>
+    </footer>
+  </div>
+
+  <script>
+    function copyCode(btn, codeId) {
+      const code = document.getElementById(codeId).textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copié !';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

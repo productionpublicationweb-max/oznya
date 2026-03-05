@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ============================================================================
+// UTILISATEURS
+// ============================================================================
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?
+  birthDate     String?
+  referralCode  String?   @unique
+  referredBy    String?
+  credits       Int       @default(0)
+  totalReferrals Int      @default(0)
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Gamification
+  loyaltyPoints Int       @default(0) @map("loyaltypoints")
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  badges        String?   @map("badges") // JSON string of badge IDs
+  totalMessages Int       @default(0) @map("totalmessages")
+  totalSessions Int       @default(1) @map("totalsessions")
+  lastActiveAt  DateTime? @map("lastactiveat")
+  theme         String    @default("dark")
+  notifications Boolean   @default(true)
+  
+  // Relations
+  referrals     Referral[] @relation("UserReferrals")
+  asReferrer    Referral[] @relation("Referrer")
+  rewards       Reward[]
+  promoCodes    PromoCode[]
+  
+  @@index([referralCode])
+  @@index([email])
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ============================================================================
+// PARRAINAGE
+// ============================================================================
+model Referral {
+  id          String      @id @default(cuid())
+  referrerId  String
+  referredId  String
+  code        String
+  status      String   @default("PENDING")
+  rewardGiven Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  completedAt DateTime?
+  
+  referrer    User        @relation("Referrer", fields: [referrerId], references: [id])
+  referred    User        @relation("UserReferrals", fields: [referredId], references: [id])
+  
+  @@unique([referrerId, referredId])
+  @@index([code])
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+
+
+// ============================================================================
+// RÉCOMPENSES
+// ============================================================================
+model Reward {
+  id          String      @id @default(cuid())
+  userId      String
+  type        RewardType
+  amount      Int
+  description String?
+  source      String
+  used        Boolean     @default(false)
+  usedAt      DateTime?
+  createdAt   DateTime    @default(now())
+  expiresAt   DateTime?
+  
+  user        User        @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([used])
+  @@map("rewards")
+}
+
+enum RewardType {
+  CREDITS
+  DISCOUNT_PERCENT
+  DISCOUNT_AMOUNT
+  FREE_CONSULTATION
+}
+
+// ============================================================================
+// CODES PROMO
+// ============================================================================
+model PromoCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  userId      String
+  discount    Int       // Percentage discount
+  source      String    // "welcome", "referral", "loyalty", etc.
+  used        Boolean   @default(false)
+  usedAt      DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  
+  user        User      @relation(fields: [userId], references: [id])
+  
+  @@index([code])
+  @@index([userId])
+  @@index([used])
+  @@map("promocodes")
+}
