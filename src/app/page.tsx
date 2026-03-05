@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Menu, X } from 'lucide-react';
 
 // Dynamically import ParticleBackground to avoid SSR issues
 const ParticleBackground = dynamic(
@@ -45,6 +45,34 @@ export default function Home() {
       
       {/* Services Sidebar */}
       <ServicesSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      
+      {/* Floating Services Button - Always visible */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className={`
+          fixed top-4 left-4 z-[100]
+          flex items-center gap-2 px-4 py-2.5 rounded-xl
+          bg-gradient-to-r from-violet-600/90 to-amber-600/90
+          border border-violet-400/30
+          text-white font-medium text-sm
+          shadow-lg shadow-violet-500/20
+          hover:shadow-violet-500/40 hover:scale-105
+          transition-all duration-300
+          backdrop-blur-md
+        `}
+      >
+        {sidebarOpen ? (
+          <>
+            <X className="w-5 h-5" />
+            <span>Fermer</span>
+          </>
+        ) : (
+          <>
+            <Menu className="w-5 h-5" />
+            <span>Services</span>
+          </>
+        )}
+      </button>
       
       {/* Main chat container */}
       <div className={`
