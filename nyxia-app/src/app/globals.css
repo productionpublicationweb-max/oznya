@@ -1,0 +1,359 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Nyxia Theme Colors */
+:root {
+  --radius: 0.625rem;
+  
+  /* Core colors */
+  --nyxia-cyan: #00D4FF;
+  --nyxia-violet: #9D4EDD;
+  --nyxia-silver: #E0E7FF;
+  --nyxia-dark: #0F172A;
+  
+  /* Backgrounds */
+  --background: #0F172A;
+  --foreground: #E0E7FF;
+  
+  /* Cards & Popovers */
+  --card: rgba(15, 23, 42, 0.8);
+  --card-foreground: #E0E7FF;
+  --popover: rgba(15, 23, 42, 0.9);
+  --popover-foreground: #E0E7FF;
+  
+  /* Primary - Cyan/Violet gradient */
+  --primary: #00D4FF;
+  --primary-foreground: #0F172A;
+  
+  /* Secondary */
+  --secondary: rgba(157, 78, 221, 0.2);
+  --secondary-foreground: #E0E7FF;
+  
+  /* Muted */
+  --muted: rgba(30, 41, 59, 0.8);
+  --muted-foreground: #94A3B8;
+  
+  /* Accent */
+  --accent: rgba(0, 212, 255, 0.15);
+  --accent-foreground: #E0E7FF;
+  
+  /* Destructive */
+  --destructive: #EF4444;
+  
+  /* Borders & Inputs */
+  --border: rgba(0, 212, 255, 0.2);
+  --input: rgba(30, 41, 59, 0.6);
+  --ring: rgba(0, 212, 255, 0.5);
+  
+  /* Sidebar */
+  --sidebar: rgba(15, 23, 42, 0.95);
+  --sidebar-foreground: #E0E7FF;
+  --sidebar-primary: #00D4FF;
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: rgba(157, 78, 221, 0.15);
+  --sidebar-accent-foreground: #E0E7FF;
+  --sidebar-border: rgba(0, 212, 255, 0.15);
+  --sidebar-ring: rgba(0, 212, 255, 0.3);
+  
+  /* Charts */
+  --chart-1: #00D4FF;
+  --chart-2: #9D4EDD;
+  --chart-3: #E0E7FF;
+  --chart-4: #00D4FF;
+  --chart-5: #9D4EDD;
+}
+
+/* Theme mappings for Tailwind */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* Base styles */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%);
+    min-height: 100vh;
+  }
+  
+  /* Custom scrollbar - Visible */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 5px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+    border-radius: 5px;
+    border: 2px solid rgba(15, 23, 42, 0.8);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #00D4FF, #E0E7FF);
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: #00D4FF rgba(15, 23, 42, 0.8);
+  }
+}
+
+/* Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 212, 255, 0.5), 0 0 10px rgba(0, 212, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.8), 0 0 30px rgba(0, 212, 255, 0.5);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes hologram {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-2px);
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+  
+  .animate-hologram {
+    animation: hologram 3s ease-in-out infinite;
+  }
+  
+  /* Glassmorphism */
+  .glass {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+  }
+  
+  /* Holographic gradient */
+  .holographic-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 212, 255, 0.1),
+      rgba(157, 78, 221, 0.1),
+      rgba(224, 231, 255, 0.05),
+      rgba(0, 212, 255, 0.1)
+    );
+  }
+  
+  /* Text gradient */
+  .text-gradient-cyan-violet {
+    background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Border gradient */
+  .border-gradient {
+    border: 1px solid transparent;
+    background: 
+      linear-gradient(var(--background), var(--background)) padding-box,
+      linear-gradient(135deg, rgba(0, 212, 255, 0.5), rgba(157, 78, 221, 0.5)) border-box;
+  }
+  
+  /* Glow effects */
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.1);
+  }
+  
+  .glow-violet {
+    box-shadow: 0 0 20px rgba(157, 78, 221, 0.3), 0 0 40px rgba(157, 78, 221, 0.1);
+  }
+  
+  /* Line clamp */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Selection color */
+::selection {
+  background: rgba(0, 212, 255, 0.3);
+  color: #E0E7FF;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid rgba(0, 212, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Link hover effects */
+a {
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+}
+
+/* 3D Card Flip for Tarot */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Tarot card hover effect */
+.tarot-card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tarot-card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+}
+
+/* Tarot deck stack effect */
+.tarot-deck-stack {
+  position: relative;
+}
+
+.tarot-deck-stack::before,
+.tarot-deck-stack::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: inherit;
+  border: inherit;
+}
+
+.tarot-deck-stack::before {
+  top: 4px;
+  left: 4px;
+  z-index: -1;
+  opacity: 0.8;
+}
+
+.tarot-deck-stack::after {
+  top: 8px;
+  left: 8px;
+  z-index: -2;
+  opacity: 0.6;
+}

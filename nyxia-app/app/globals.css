@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0F172A;
+  --foreground: #E0E7FF;
+}
+
+body {
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #0F172A 100%);
+  min-height: 100vh;
+  color: #E0E7FF;
+  margin: 0;
+}
+
+.text-gradient-cyan-violet {
+  background: linear-gradient(135deg, #00D4FF, #9D4EDD);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-background {
+  background-color: #0F172A;
+}
+
+.text-foreground {
+  color: #E0E7FF;
+}
