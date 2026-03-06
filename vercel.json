@@ -8,7 +8,7 @@
   ],
   "build": {
     "env": {
-      "FORCE_CACHE_BUST": "v6-2026-03-06"
+      "FORCE_CACHE_BUST": "v7-2026-03-06-sidebar"
     }
   }
 }
