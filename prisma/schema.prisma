@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+// ============================================================================
+// UTILISATEURS
+// ============================================================================
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?
+  referralCode  String?   @unique
+  referredBy    String?
+  credits       Int       @default(0)
+  totalReferrals Int      @default(0)
+  role          String    @default("USER")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  referrals     Referral[] @relation("UserReferrals")
+  asReferrer    Referral[] @relation("Referrer")
+  rewards       Reward[]
+
+  @@index([referralCode])
+  @@index([email])
+  @@map("users")
+}
+
+// ============================================================================
+// PARRAINAGE
+// ============================================================================
+model Referral {
+  id          String    @id @default(cuid())
+  referrerId  String
+  referredId  String
+  code        String
+  status      String    @default("PENDING")
+  rewardGiven Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  
+  referrer    User      @relation("Referrer", fields: [referrerId], references: [id])
+  referred    User      @relation("UserReferrals", fields: [referredId], references: [id])
+  
+  @@unique([referrerId, referredId])
+  @@index([code])
+  @@index([referrerId])
+  @@map("referrals")
+}
+
+// ============================================================================
+// RÉCOMPENSES
+// ============================================================================
+model Reward {
+  id          String    @id @default(cuid())
+  userId      String
+  type        String
+  amount      Int
+  description String?
+  source      String
+  used        Boolean   @default(false)
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  
+  user        User      @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([used])
+  @@map("rewards")
+}
+
+// ============================================================================
+// MESSAGERIE INTERNE
+// ============================================================================
+model Message {
+  id          String    @id @default(cuid())
+  senderId    String?
+  receiverId  String?
+  subject     String
+  content     String
+  isRead      Boolean   @default(false)
+  isFromAdmin Boolean   @default(false)
+  priority    String    @default("NORMAL")
+  parentId    String?
+  createdAt   DateTime  @default(now())
+  readAt      DateTime?
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("messages")
+}
