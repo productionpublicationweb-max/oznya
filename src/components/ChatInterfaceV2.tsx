@@ -13,7 +13,7 @@ import { RuneReading } from './RuneReading';
 import { LunarPhasesButton } from './LunarPhases';
 import { ReferralSystem } from './ReferralSystem';
 import { AuthModal } from './AuthModal';
-import { UserProfile } from './UserProfile';
+import { ProfileSidebar } from './ProfileSidebar';
 import { useAuth } from '@/lib/auth-context';
 import { CoffretModal } from './CoffretModal';
 import { FunnelSidebar } from './FunnelSidebar';
@@ -611,7 +611,7 @@ export function ChatInterfaceV2() {
       )}
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      <UserProfile isOpen={showUserProfile} onClose={() => setShowUserProfile(false)} />
+      <ProfileSidebar isOpen={showUserProfile} onClose={() => setShowUserProfile(false)} />
       
       {/* Coffret Modal */}
       <CoffretModal 
