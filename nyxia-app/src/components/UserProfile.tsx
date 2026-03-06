@@ -772,3 +772,4 @@ export function UserProfile({ isOpen, onClose }: UserProfileProps) {
     </div>
   );
 }
+// Build fix 1772833612
