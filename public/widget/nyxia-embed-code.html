@@ -1,0 +1,145 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     🔮 NYXIA WIDGET - Assistante Mystique IA
+     Copiez tout ce code et collez-le sur votre site web
+     ═══════════════════════════════════════════════════════════════ -->
+
+<style>
+  /* Animation de lueur pour le bouton Nyxia */
+  @keyframes nyxiaGlow {
+    0% {
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.6), 0 0 10px rgba(157, 78, 221, 0.4);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 25px rgba(0, 212, 255, 0.9), 0 0 20px rgba(157, 78, 221, 0.7), 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    100% {
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.6), 0 0 10px rgba(157, 78, 221, 0.4);
+    }
+  }
+
+  @keyframes nyxiaFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  /* Widget iframe */
+  .nyxia-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 420px;
+    height: 650px;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 212, 255, 0.2);
+    border: none;
+    z-index: 9999;
+    display: none;
+    background: linear-gradient(135deg, #0F172A, #1E1B4B);
+  }
+
+  /* Bouton toggle */
+  .nyxia-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00D4FF 0%, #9D4EDD 100%);
+    border: none;
+    cursor: pointer;
+    z-index: 10000;
+    box-shadow: 0 4px 25px rgba(0, 212, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    transition: all 0.3s ease;
+    animation: nyxiaGlow 3s ease-in-out infinite;
+  }
+
+  .nyxia-toggle:hover {
+    transform: scale(1.15);
+    animation: none;
+    box-shadow: 0 6px 35px rgba(0, 212, 255, 0.7), 0 0 20px rgba(157, 78, 221, 0.5);
+  }
+
+  /* Badge "Nouveau" */
+  .nyxia-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: linear-gradient(135deg, #FF4D6D, #FF8FA3);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(255, 77, 109, 0.5);
+  }
+
+  /* Responsive mobile */
+  @media (max-width: 480px) {
+    .nyxia-widget {
+      width: calc(100vw - 40px);
+      height: calc(100vh - 100px);
+      bottom: 90px;
+      right: 20px;
+      left: 20px;
+    }
+  }
+</style>
+
+<!-- Bouton flottant Nyxia -->
+<button class="nyxia-toggle" onclick="toggleNyxia()">
+  🔮
+  <span class="nyxia-badge">IA</span>
+</button>
+
+<!-- Iframe du chat Nyxia -->
+<iframe
+  id="nyxia-chat"
+  class="nyxia-widget"
+  src="https://VOTRE-URL-NYXIA.com"
+  title="Nyxia - Assistante Mystique IA"
+  allow="microphone; camera"
+></iframe>
+
+<!-- Script pour ouvrir/fermer -->
+<script>
+  let nyxiaOpen = false;
+
+  function toggleNyxia() {
+    const chat = document.getElementById('nyxia-chat');
+    const btn = document.querySelector('.nyxia-toggle');
+    nyxiaOpen = !nyxiaOpen;
+
+    if (nyxiaOpen) {
+      chat.style.display = 'block';
+      btn.style.display = 'none';
+    } else {
+      chat.style.display = 'none';
+      btn.style.display = 'flex';
+    }
+  }
+
+  // Fermer en cliquant à l'extérieur (optionnel)
+  document.addEventListener('click', function(e) {
+    if (nyxiaOpen && !e.target.closest('.nyxia-widget') && !e.target.closest('.nyxia-toggle')) {
+      toggleNyxia();
+    }
+  });
+
+  // Fermer avec Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && nyxiaOpen) {
+      toggleNyxia();
+    }
+  });
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FIN DU CODE NYXIA WIDGET
+     Remplacez "https://VOTRE-URL-NYXIA.com" par l'URL réelle
+     ═══════════════════════════════════════════════════════════════ -->
