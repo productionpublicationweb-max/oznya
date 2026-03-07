@@ -1,14 +1,13 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "crons": [
-    {
-      "path": "/api/cron/daily-reminder",
-      "schedule": "0 8 * * *"
-    }
-  ],
-  "build": {
-    "env": {
-      "FORCE_CACHE_BUST": "v6-2026-03-06"
+  "$schema": "https://openapi.vercel.sh/vercel/v1",
+  "buildCommand": "bun run build",
+  "devCommand": "bun run dev",
+  "installCommand": "bun install",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "functions": {
+    "api/index": {
+      "memory": 1024,
     }
   }
 }
