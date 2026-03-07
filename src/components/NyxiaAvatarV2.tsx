@@ -7,7 +7,7 @@ export type AvatarMood = 'neutral' | 'happy' | 'thinking' | 'excited' | 'mystica
 
 interface NyxiaAvatarV2Props {
   isTyping?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   mood?: AvatarMood;
   className?: string;
   showGlow?: boolean;
@@ -33,12 +33,14 @@ export function NyxiaAvatarV2({
   const containerRef = useRef<HTMLDivElement>(null);
   
   const sizeClasses = {
+    xs: 'w-8 h-8',
     sm: 'w-10 h-10',
     md: 'w-14 h-14',
     lg: 'w-24 h-24'
   };
   
   const sizePixels = {
+    xs: 32,
     sm: 40,
     md: 56,
     lg: 96
