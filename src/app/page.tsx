@@ -2,7 +2,8 @@
 
 import { useState, Component, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, Moon, Sun, Star } from 'lucide-react';
+import { getDailyEnergy, getTimeBasedGreeting, DailyEnergy } from '@/lib/dailyPrediction';
 
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNode }, { hasError: boolean; error?: Error }> {
@@ -76,38 +77,104 @@ function useMounted() {
   return mounted;
 }
 
-// Simple welcome screen without heavy components
-function WelcomeScreen({ onStart }: { onStart: () => void }) {
+// Enhanced welcome screen with daily energy
+function WelcomeScreen({ onStart, dailyEnergy }: { onStart: () => void; dailyEnergy: DailyEnergy }) {
+  const greeting = getTimeBasedGreeting();
+  const hour = new Date().getHours();
+  const isNight = hour >= 21 || hour < 6;
+  
   return (
     <div className="flex flex-col items-center justify-center h-full text-center space-y-6 p-4">
+      {/* Avatar avec glow */}
       <div className="relative">
-        <div className="absolute inset-0 blur-3xl opacity-30">
+        <div className="absolute inset-0 blur-3xl opacity-40">
           <div className="w-32 h-32 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500" />
         </div>
-        <div className="text-6xl">🔮</div>
+        <div className="relative text-7xl animate-pulse">🔮</div>
+        {isNight && (
+          <Moon className="absolute -top-2 -right-2 w-6 h-6 text-yellow-300 animate-bounce" />
+        )}
+        {!isNight && hour >= 6 && hour < 18 && (
+          <Sun className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400 animate-pulse" />
+        )}
       </div>
       
+      {/* Titre et salutation */}
       <div className="space-y-3 max-w-md">
-        <h2 className="text-base font-light text-slate-200">
-          Bienvenue dans l'univers de{' '}
-          <span className="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent font-medium">
+        <h2 className="text-lg font-light text-slate-200">
+          {greeting}, bienvenue dans l'univers de{' '}
+          <span className="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent font-semibold">
             Nyxia
           </span>
         </h2>
-        <p className="text-slate-400 text-sm">
-          Ton assistante mystique IA, prête à t'accompagner.
+      </div>
+      
+      {/* Carte énergie du jour */}
+      <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-cyan-500/20 backdrop-blur-sm shadow-xl shadow-cyan-500/5 w-full max-w-sm">
+        <div className="flex items-center gap-4 mb-4">
+          <div 
+            className="w-14 h-14 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg"
+            style={{ 
+              background: `linear-gradient(135deg, ${dailyEnergy.luckyColorHex}, ${dailyEnergy.luckyColorHex}88)` 
+            }}
+          >
+            {dailyEnergy.number}
+          </div>
+          <div className="text-left">
+            <div className="text-sm font-semibold text-white">{dailyEnergy.title}</div>
+            <div className="text-xs text-cyan-400 flex items-center gap-1">
+              <Star className="w-3 h-3" />
+              Énergie du jour
+            </div>
+          </div>
+        </div>
+        
+        <p className="text-xs text-slate-300 text-left leading-relaxed mb-4">
+          {dailyEnergy.description}
+        </p>
+        
+        <div className="flex items-center gap-4 text-[11px] text-slate-400 border-t border-slate-700/50 pt-3">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full" style={{ background: dailyEnergy.luckyColorHex }} />
+            {dailyEnergy.luckyColor}
+          </span>
+          <span>•</span>
+          <span>Nombre: {dailyEnergy.luckyNumber}</span>
+          <span>•</span>
+          <span>💎 {dailyEnergy.crystal}</span>
+        </div>
+      </div>
+      
+      {/* Conseil du jour */}
+      <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-violet-500/10 border border-cyan-500/20 max-w-sm">
+        <p className="text-xs text-slate-300 italic">
+          💫 <span className="font-medium text-cyan-300">Conseil:</span> {dailyEnergy.advice}
         </p>
       </div>
       
+      {/* Bouton Commencer */}
       <button 
         onClick={onStart}
-        className="px-8 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300"
+        className="group relative overflow-hidden px-10 py-4 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 text-white font-semibold shadow-xl shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:scale-105 transition-all duration-300"
       >
-        <span className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4" />
+        <span className="relative z-10 flex items-center gap-2">
+          <Sparkles className="w-5 h-5" />
           Commencer la conversation
         </span>
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity" />
       </button>
+      
+      {/* Lien vers Oznya */}
+      <a 
+        href="https://www.oznya.com" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-xs text-slate-500 hover:text-cyan-400 transition-colors flex items-center gap-1"
+      >
+        <span>Visiter</span>
+        <span className="text-cyan-400">oznya.com</span>
+        <span>→</span>
+      </a>
     </div>
   );
 }
@@ -115,6 +182,7 @@ function WelcomeScreen({ onStart }: { onStart: () => void }) {
 export default function Home() {
   const mounted = useMounted();
   const [started, setStarted] = useState(false);
+  const [dailyEnergy] = useState(() => getDailyEnergy());
 
   if (!mounted) {
     return (
@@ -128,8 +196,25 @@ export default function Home() {
     return (
       <main className="relative h-screen w-full overflow-hidden bg-slate-900">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+        
+        {/* Étoiles animées */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+              style={{
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                opacity: Math.random() * 0.5 + 0.2
+              }}
+            />
+          ))}
+        </div>
+        
         <div className="relative z-10 h-full flex items-center justify-center">
-          <WelcomeScreen onStart={() => setStarted(true)} />
+          <WelcomeScreen onStart={() => setStarted(true)} dailyEnergy={dailyEnergy} />
         </div>
       </main>
     );
