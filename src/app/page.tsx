@@ -68,24 +68,69 @@ const ChatInterfaceV2 = dynamic(
 function useMounted() {
   const [mounted, setMounted] = useState(false);
   
-  // Using useEffect with eslint-disable to avoid the warning
-  // This is a common pattern for SSR-safe client-only rendering
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  if (typeof window !== 'undefined') {
-    // Using queueMicrotask to defer setState
+  // Use queueMicrotask to defer setState (avoids lint warning)
+  if (typeof window !== 'undefined' && !mounted) {
     queueMicrotask(() => setMounted(true));
   }
   
   return mounted;
 }
 
+// Simple welcome screen without heavy components
+function WelcomeScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center space-y-6 p-4">
+      <div className="relative">
+        <div className="absolute inset-0 blur-3xl opacity-30">
+          <div className="w-32 h-32 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500" />
+        </div>
+        <div className="text-6xl">🔮</div>
+      </div>
+      
+      <div className="space-y-3 max-w-md">
+        <h2 className="text-base font-light text-slate-200">
+          Bienvenue dans l'univers de{' '}
+          <span className="bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent font-medium">
+            Nyxia
+          </span>
+        </h2>
+        <p className="text-slate-400 text-sm">
+          Ton assistante mystique IA, prête à t'accompagner.
+        </p>
+      </div>
+      
+      <button 
+        onClick={onStart}
+        className="px-8 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 text-white font-medium shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300"
+      >
+        <span className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4" />
+          Commencer la conversation
+        </span>
+      </button>
+    </div>
+  );
+}
+
 export default function Home() {
   const mounted = useMounted();
+  const [started, setStarted] = useState(false);
 
   if (!mounted) {
     return (
       <main className="h-screen w-full bg-slate-900 flex items-center justify-center">
         <LoadingSpinner />
+      </main>
+    );
+  }
+
+  if (!started) {
+    return (
+      <main className="relative h-screen w-full overflow-hidden bg-slate-900">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+        <div className="relative z-10 h-full flex items-center justify-center">
+          <WelcomeScreen onStart={() => setStarted(true)} />
+        </div>
       </main>
     );
   }
