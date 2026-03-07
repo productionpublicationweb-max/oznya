@@ -33,6 +33,7 @@ import {
   getActivePromo,
   generatePromoCode
 } from '@/lib/storage';
+import { trackFeatureUse, trackProductInterest } from '@/lib/salesFunnel';
 import { 
   getDailyEnergy, 
   getTimeBasedGreeting,
@@ -461,7 +462,7 @@ export function ChatInterfaceV2() {
         <div className="flex-shrink-0 px-4 py-2 border-t border-cyan-500/10 bg-slate-900/30">
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <button 
-              onClick={() => setShowCalendly(true)} 
+              onClick={() => { setShowCalendly(true); trackFeatureUse('calendly'); }} 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs hover:bg-cyan-500/20 hover:text-cyan-200 transition-colors shadow-lg shadow-cyan-500/10"
             >
               <Calendar className="w-4 h-4" />
@@ -469,7 +470,7 @@ export function ChatInterfaceV2() {
             </button>
             
             <button
-              onClick={() => setShowCoffret(true)}
+              onClick={() => { setShowCoffret(true); trackProductInterest('coffret-serenite'); }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs hover:bg-cyan-500/20 hover:text-cyan-200 transition-colors shadow-lg shadow-cyan-500/10"
             >
               <Gift className="w-4 h-4" />
@@ -477,17 +478,17 @@ export function ChatInterfaceV2() {
             </button>
             
             <button 
-              onClick={() => { setShowTarot(true); setFunnelContext(prev => ({ ...prev, hasUsedTarot: true })); }} 
+              onClick={() => { setShowTarot(true); setFunnelContext(prev => ({ ...prev, hasUsedTarot: true })); trackFeatureUse('tarot'); }} 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs hover:bg-cyan-500/20 hover:text-cyan-200 transition-colors shadow-lg shadow-cyan-500/10"
             >
               <Moon className="w-4 h-4" />
               Tarot
             </button>
             
-            <LunarPhasesButton onOpenCoffret={() => { setShowCoffret(true); setFunnelContext(prev => ({ ...prev, hasViewedLunar: true })); }} />
+            <LunarPhasesButton onOpenCoffret={() => { setShowCoffret(true); setFunnelContext(prev => ({ ...prev, hasViewedLunar: true })); trackFeatureUse('lunar'); }} />
             
             <button 
-              onClick={() => { setShowRunes(true); setFunnelContext(prev => ({ ...prev, hasUsedRunes: true })); }} 
+              onClick={() => { setShowRunes(true); setFunnelContext(prev => ({ ...prev, hasUsedRunes: true })); trackFeatureUse('runes'); }} 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-300 text-xs hover:bg-violet-500/20 hover:text-violet-200 transition-colors shadow-lg shadow-violet-500/10"
             >
               <span className="text-base">ᚱ</span>
@@ -495,7 +496,7 @@ export function ChatInterfaceV2() {
             </button>
             
             <button 
-              onClick={() => { setEmailType('summary'); setShowEmail(true); }} 
+              onClick={() => { setEmailType('summary'); setShowEmail(true); trackFeatureUse('email_recap'); }} 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs hover:bg-cyan-500/20 hover:text-cyan-200 transition-colors shadow-lg shadow-cyan-500/10"
             >
               <Mail className="w-4 h-4" />
@@ -503,7 +504,7 @@ export function ChatInterfaceV2() {
             </button>
             
             <button 
-              onClick={() => setShowReferral(true)} 
+              onClick={() => { setShowReferral(true); trackFeatureUse('referral'); }} 
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs hover:bg-cyan-500/20 hover:text-cyan-200 transition-colors shadow-lg shadow-cyan-500/10"
             >
               <Sparkles className="w-4 h-4" />

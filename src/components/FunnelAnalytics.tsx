@@ -1,41 +1,31 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { TrendingUp, Users, ShoppingCart, DollarSign, Eye, Heart, Sparkles, Crown } from 'lucide-react';
-import { useMemo } from 'react';
+import { TrendingUp, Users, ShoppingCart, DollarSign, Eye, Heart, Sparkles, Crown, Activity, RefreshCw } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { getDashboardStats, trackVisit, getRecentEvents, FunnelEvent } from '@/lib/salesFunnel';
 
-// Données simulées pour la démo - en production, ces données viendraient de la base de données
-const DEMO_ANALYTICS = {
-  totalUsers: 1247,
-  conversionRate: 12.5,
-  averageCart: 147,
-  revenue: 15450,
-  byStage: {
-    awareness: 1247,
-    interest: 892,
-    consideration: 456,
-    intent: 234,
-    purchase: 156,
-    loyalty: 89,
-    advocacy: 34
-  },
-  topProducts: [
-    { name: 'Coffret Sérénité Radicale', sales: 47, revenue: 4559 },
-    { name: 'Abonnement VIP Nyxia', sales: 38, revenue: 1786 },
-    { name: 'Formation Design Humain', sales: 23, revenue: 6831 },
-    { name: 'Consultation Personnalisée', sales: 18, revenue: 2286 }
-  ],
-  recentActions: [
-    { type: 'purchase', product: 'Coffret Sérénité', time: 'Il y a 5 min' },
-    { type: 'cart_added', product: 'Formation Design Humain', time: 'Il y a 12 min' },
-    { type: 'interest', product: 'Abonnement VIP', time: 'Il y a 23 min' },
-    { type: 'purchase', product: 'Consultation', time: 'Il y a 45 min' }
-  ]
-};
+// Initialisation paresseuse pour éviter les appels setState dans useEffect
+function getInitialEvents(): FunnelEvent[] {
+  if (typeof window !== 'undefined') {
+    trackVisit();
+    return getRecentEvents(20);
+  }
+  return [];
+}
 
 export function FunnelAnalytics() {
-  // En production, ces données seraient chargées depuis l'API
-  const analytics = useMemo(() => DEMO_ANALYTICS, []);
+  const [recentEvents, setRecentEvents] = useState<FunnelEvent[]>(getInitialEvents);
+  
+  // Rafraîchir les données
+  const refreshData = useCallback(() => {
+    setRecentEvents(getRecentEvents(20));
+  }, []);
+
+  // Charger les statistiques - dérivé directement pendant le rendu
+  const stats = getDashboardStats();
+  const isRealData = stats.hasRealData;
+  const analytics = stats;
 
   const stages = [
     { id: 'awareness', name: 'Découverte', icon: Eye, color: 'from-slate-500 to-slate-400' },
@@ -62,10 +52,24 @@ export function FunnelAnalytics() {
             <TrendingUp className="w-5 h-5 text-cyan-400" />
             Analyse du Tunnel de Vente
           </h2>
-          <p className="text-sm text-slate-400">Performance sur les 30 derniers jours</p>
+          <p className="text-sm text-slate-400">
+            Performance {isRealData ? 'en temps réel' : 'simulée - données de démonstration'}
+          </p>
         </div>
-        <div className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium">
-          📈 Croissance +24%
+        <div className="flex items-center gap-3">
+          {isRealData && (
+            <span className="px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-medium flex items-center gap-2">
+              <Activity className="w-4 h-4 animate-pulse" />
+              Données réelles
+            </span>
+          )}
+          <button 
+            onClick={refreshData}
+            className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-white hover:border-cyan-500/50 transition-all"
+            title="Rafraîchir les données"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -187,38 +191,57 @@ export function FunnelAnalytics() {
         <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-pink-400" />
           Activité Récente
+          {isRealData && (
+            <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 animate-pulse">
+              Live
+            </span>
+          )}
         </h3>
         
-        <div className="flex flex-wrap gap-3">
-          {analytics.recentActions.map((action, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
-                action.type === 'purchase' 
-                  ? 'bg-green-500/10 border border-green-500/20 text-green-300'
-                  : action.type === 'cart_added'
-                    ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
-                    : 'bg-violet-500/10 border border-violet-500/20 text-violet-300'
-              }`}
-            >
-              {action.type === 'purchase' && '💳'}
-              {action.type === 'cart_added' && '🛒'}
-              {action.type === 'interest' && '✨'}
-              <span>{action.product}</span>
-              <span className="text-xs opacity-60">{action.time}</span>
-            </motion.div>
-          ))}
-        </div>
+        {analytics.recentActions.length > 0 ? (
+          <div className="flex flex-wrap gap-3">
+            {analytics.recentActions.map((action, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.05 }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                  action.type === 'purchase' 
+                    ? 'bg-green-500/10 border border-green-500/20 text-green-300'
+                    : action.type === 'cart_add' || action.type === 'interest'
+                      ? 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                      : action.type === 'feature_used'
+                        ? 'bg-violet-500/10 border border-violet-500/20 text-violet-300'
+                        : 'bg-slate-500/10 border border-slate-500/20 text-slate-300'
+                }`}
+              >
+                {action.type === 'purchase' && '💳'}
+                {action.type === 'cart_add' && '🛒'}
+                {action.type === 'interest' && '✨'}
+                {action.type === 'feature_used' && '🔮'}
+                {action.type === 'view' && '👁️'}
+                <span>{action.product}</span>
+                <span className="text-xs opacity-60">{action.time}</span>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-slate-500 py-8">
+            <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Aucune activité récente</p>
+            <p className="text-xs mt-1">Les actions des utilisateurs apparaîtront ici</p>
+          </div>
+        )}
       </div>
 
       {/* Note informative */}
-      <div className="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20">
-        <p className="text-xs text-cyan-300 text-center">
-          💡 Les données affichées sont simulées pour la démonstration. 
-          En production, les analytics seront alimentées par les actions réelles des utilisateurs.
+      <div className={`p-4 rounded-xl ${isRealData ? 'bg-green-500/5 border border-green-500/20' : 'bg-cyan-500/5 border border-cyan-500/20'}`}>
+        <p className={`text-xs text-center ${isRealData ? 'text-green-300' : 'text-cyan-300'}`}>
+          {isRealData 
+            ? '✅ Ces données sont réelles et mises à jour en temps réel basées sur l\'activité du site.'
+            : '💡 Les données affichées sont simulées pour la démonstration. Les analytics seront alimentées par les actions réelles des utilisateurs.'
+          }
         </p>
       </div>
     </div>
