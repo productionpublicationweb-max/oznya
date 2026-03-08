@@ -1,6 +1,5 @@
 'use client';
 
-import { initSafeStorage } from '@/lib/storage-cleaner';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -70,6 +69,30 @@ const getWelcomeMessage = (energy: DailyEnergy, greeting: string) => [
 ];
 
 export function ChatInterfaceV2() {
+  // Nettoyage du localStorage au démarrage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Supprimer les clés obsolètes
+      const OBSOLETE_KEYS = ['nyxia_last_visit_', 'nyxia_last_visit', 'nyxia_user'];
+      OBSOLETE_KEYS.forEach(key => {
+        try { localStorage.removeItem(key); } catch {}
+      });
+      
+      // Valider nyxia_settings
+      try {
+        const settings = localStorage.getItem('nyxia_settings');
+        if (settings) {
+          const parsed = JSON.parse(settings);
+          if (typeof parsed.soundEnabled !== 'boolean' || typeof parsed.reminderEnabled !== 'boolean') {
+            localStorage.removeItem('nyxia_settings');
+          }
+        }
+      } catch {
+        try { localStorage.removeItem('nyxia_settings'); } catch {}
+      }
+    }
+  }, []);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [context, setContext] = useState<ChatContext>({ messageCount: 0 });
@@ -104,7 +127,6 @@ export function ChatInterfaceV2() {
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showFunnelSidebar, setShowFunnelSidebar] = useState(false);
   
-  // Context pour le tunnel de vente
   const [funnelContext, setFunnelContext] = useState({
     conversationCount: 0,
     hasCompletedProfile: false,
@@ -112,11 +134,6 @@ export function ChatInterfaceV2() {
     hasUsedRunes: false,
     hasViewedLunar: false
   });
-
-  // Nettoyer le localStorage au démarrage
-  useEffect(() => {
-    initSafeStorage();
-  }, []);
 
   useEffect(() => {
     const settings = getSettings();
