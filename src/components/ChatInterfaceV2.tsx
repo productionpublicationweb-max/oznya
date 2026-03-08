@@ -1,5 +1,6 @@
 'use client';
 
+import { initSafeStorage } from '@/lib/storage-cleaner';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -112,6 +113,11 @@ export function ChatInterfaceV2() {
     hasViewedLunar: false
   });
 
+  // Nettoyer le localStorage au démarrage
+  useEffect(() => {
+    initSafeStorage();
+  }, []);
+
   useEffect(() => {
     const settings = getSettings();
     setSoundEnabled(settings.soundEnabled);
@@ -213,7 +219,7 @@ export function ChatInterfaceV2() {
             ...context,
             messageCount: context.messageCount + 1
           },
-          userId: user?.id // Pour la mémoire conversationnelle
+          userId: user?.id
         })
       });
 
@@ -226,14 +232,13 @@ export function ChatInterfaceV2() {
         role: 'assistant',
         content: data.response,
         timestamp: new Date(),
-        suggestions: data.suggestions || [], // Suggestions intelligentes
+        suggestions: data.suggestions || [],
         serviceRecommendation: data.context?.serviceRecommendation
       };
 
       setMessages(prev => [...prev, assistantMessage]);
       setContext(prev => ({ ...prev, messageCount: prev.messageCount + 2 }));
       
-      // Mettre à jour le contexte du funnel
       setFunnelContext(prev => ({
         ...prev,
         conversationCount: prev.conversationCount + 1
@@ -448,7 +453,6 @@ export function ChatInterfaceV2() {
             timestamp={message.timestamp}
             isTyping={message.id === 'typing'}
             onSuggestionClick={(suggestion) => {
-              // Envoyer la suggestion comme message
               sendMessage(suggestion);
             }}
           />
@@ -613,13 +617,11 @@ export function ChatInterfaceV2() {
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       <ProfileSidebar isOpen={showUserProfile} onClose={() => setShowUserProfile(false)} />
       
-      {/* Coffret Modal */}
       <CoffretModal 
         isOpen={showCoffret} 
         onClose={() => setShowCoffret(false)} 
       />
       
-      {/* Tunnel de Vente Sidebar */}
       <FunnelSidebar
         isOpen={showFunnelSidebar}
         onClose={() => setShowFunnelSidebar(false)}
